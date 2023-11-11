@@ -1,5 +1,7 @@
 .idea/
+__pycache__/
 env/
+data/
 
 *.sqlite
 config.py

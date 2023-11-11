@@ -5,7 +5,7 @@ import sqlite3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from config import CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
-conn = sqlite3.connect('./db_dashboard_running.sqlite')
+conn = sqlite3.connect('data/strava/db_dashboard_running.sqlite')
 
 auth_url = "https://www.strava.com/oauth/token"
 activites_url = "https://www.strava.com/api/v3/athlete/activities"
