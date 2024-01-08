@@ -1,4 +1,5 @@
 import datetime
+import os
 from garminconnect import (
     Garmin
 )
@@ -20,6 +21,9 @@ activities = api.get_activities_by_date(
                 start_date.isoformat(), end_date.isoformat(), 'running')
 print(f'activities : {len(activities)}')
 
+# check if a folder exists
+if not os.path.exists('./data/garmin'):
+    os.makedirs('./data/garmin')
 
 for i, activity in enumerate(activities):
     print(i)
