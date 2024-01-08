@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import urllib3
 import sqlite3
+import os
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from config import CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
@@ -23,6 +24,10 @@ res = requests.post(auth_url, data=payload, verify=False)
 access_token = res.json()['access_token']
 
 print("Access Token = {}\n".format(access_token))
+
+# check if a folder exists
+if not os.path.exists('./data/strava'):
+    os.makedirs('./data/strava')
 
 header = {'Authorization': 'Bearer ' + access_token}
 page_num = 1
