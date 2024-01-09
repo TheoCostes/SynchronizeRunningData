@@ -52,4 +52,3 @@ while True:
 df = pd.DataFrame.from_records(all_activities)
 df.to_csv('./data/strava/strava.csv')
 conn.close()
-print(df.head(20))
