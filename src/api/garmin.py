@@ -3,6 +3,8 @@ import os
 from garminconnect import (
     Garmin
 )
+os.chdir("..")
+print(os.getcwd())
 from config import GARMIN_EMAIL, GARMIN_PWD
 
 

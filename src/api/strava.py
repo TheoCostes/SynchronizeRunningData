@@ -5,6 +5,8 @@ import sqlite3
 import os
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+print(os.getcwd())
+
 from config import CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
 conn = sqlite3.connect('data/strava/db_dashboard_running.sqlite')
 
