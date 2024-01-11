@@ -6,3 +6,4 @@ data/
 *.sqlite
 config.py
 test_db.py
+.DS_Store
