@@ -8,7 +8,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 print(os.getcwd())
 
 from config import CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
-conn = sqlite3.connect('data/strava/db_dashboard_running.sqlite')
 
 auth_url = "https://www.strava.com/oauth/token"
 activites_url = "https://www.strava.com/api/v3/athlete/activities"
@@ -28,8 +27,8 @@ access_token = res.json()['access_token']
 print("Access Token = {}\n".format(access_token))
 
 # check if a folder exists
-if not os.path.exists('./data/strava'):
-    os.makedirs('./data/strava')
+if not os.path.exists('../../data/strava'):
+    os.makedirs('../../data/strava')
 
 header = {'Authorization': 'Bearer ' + access_token}
 page_num = 1
@@ -53,4 +52,3 @@ while True:
 
 df = pd.DataFrame.from_records(all_activities)
 df.to_csv('./data/strava/strava.csv')
-conn.close()

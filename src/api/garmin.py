@@ -1,10 +1,10 @@
 import datetime
 import os
+
+import pandas as pd
 from garminconnect import (
     Garmin
 )
-os.chdir("..")
-print(os.getcwd())
 from config import GARMIN_EMAIL, GARMIN_PWD
 
 
@@ -24,16 +24,18 @@ activities = api.get_activities_by_date(
 print(f'activities : {len(activities)}')
 
 # check if a folder exists
-if not os.path.exists('./data/garmin'):
-    os.makedirs('./data/garmin')
+if not os.path.exists('../../data/garmin'):
+    os.makedirs('../../data/garmin')
 
 for i, activity in enumerate(activities):
     print(i)
     activity_id = activity["activityId"]
+    activity_date = activity["startTimeLocal"]
+    print(activity)
     gpx_data = api.download_activity(
                         activity_id, dl_fmt=api.ActivityDownloadFormat.CSV
                     )
-    output_file = f"./data/garmin/{str(activity_id)}.csv"
+    output_file = f"../../data/garmin/{str(activity_id)}_{str(activity_date)}.csv"
     with open(output_file, "wb") as fb:
         fb.write(gpx_data)
 
