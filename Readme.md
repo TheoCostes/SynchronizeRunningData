@@ -21,7 +21,7 @@ Follow these steps to get started with the StravaGarminCentralizer project.
 1. Clone the repository: `git clone https://github.com/your-username/StravaGarminCentralizer.git`
 2. Navigate to the project directory: `cd StravaGarminCentralizer`
 3. Install dependencies: `npm install && pip install -r requirements.txt`
-4. Configure API keys in `config.js` and `config.py`.
+4. Configure API keys in `config.py`.
 
 
 ## Contributing
