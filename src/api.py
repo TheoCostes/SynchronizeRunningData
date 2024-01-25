@@ -2,7 +2,6 @@ import datetime
 import os
 import requests
 import pandas as pd
-import urllib3
 
 from garminconnect import Garmin
 from config import GARMIN_EMAIL, GARMIN_PWD, CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
@@ -60,8 +59,8 @@ class GarminAPI:
         Args:
             activities (list): The list of activities to save.
         """
-        if not os.path.exists("../../data/garmin"):
-            os.makedirs("../../data/garmin")
+        if not os.path.exists("../data/garmin"):
+            os.makedirs("../data/garmin")
 
         for i, activity in enumerate(activities):
             activity_id = activity["activityId"]
@@ -140,8 +139,8 @@ class StravaAPI:
         Save activities fetched from the Strava API in CSV format.
         If the directory for saving does not exist, create it.
         """
-        if not os.path.exists("../../data/strava"):
-            os.makedirs("../../data/strava")
+        if not os.path.exists("../data/strava"):
+            os.makedirs("../data/strava")
 
         page_num = 1
         all_activities = []
