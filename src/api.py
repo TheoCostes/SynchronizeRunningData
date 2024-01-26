@@ -63,16 +63,19 @@ class GarminAPI:
             os.makedirs("../data/garmin")
 
         for i, activity in enumerate(activities):
+            print(i)
             activity_id = activity["activityId"]
             activity_date = activity["startTimeLocal"]
-            gpx_data = self.api.download_activity(
-                activity_id, dl_fmt=self.api.ActivityDownloadFormat.CSV
-            )
             output_file = (
-                f"../../data/garmin/{str(activity_id)}_{str(activity_date)}.csv"
+                f"../data/garmin/{str(activity_id)}_{str(activity_date)}.csv"
             )
-            with open(output_file, "wb") as fb:
-                fb.write(gpx_data)
+            file_exists = os.path.isfile(output_file)
+            if not file_exists:
+                gpx_data = self.api.download_activity(
+                    activity_id, dl_fmt=self.api.ActivityDownloadFormat.CSV
+                )
+                with open(output_file, "wb") as fb:
+                    fb.write(gpx_data)
 
 
 class StravaAPI:
@@ -134,6 +137,22 @@ class StravaAPI:
         ).json()
         return activities
 
+    def get_activity_laps(self, activity_id):
+        """
+        Fetch the laps for the given activity ID from the Strava API.
+        :param activity_id:
+        :return:
+        """
+        url = f"https://www.strava.com/api/v3/activities/{activity_id}/laps"
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
+
     def save_data(self):
         """
         Save activities fetched from the Strava API in CSV format.
@@ -144,19 +163,33 @@ class StravaAPI:
 
         page_num = 1
         all_activities = []
+        all_activities_by_laps = []
+        print("fetching strava activities...")
         while True:
             activities = self.get_activities(page_num)
-            if all_activities:
+            print(all_activities)
+            all_activities.extend(activities)
+            """ if all_activities:
                 all_activities.extend(activities)
             else:
                 all_activities = activities
+            """
+            for el in activities:
+                try:
+                    print(el["id"])
+                    all_activities_by_laps.append(self.get_activity_laps(el["id"]))
+                except Exception as e:
+                    pass
             if len(activities) == 0:
                 print("no more activities...")
                 break
             page_num += 1
 
         df = pd.DataFrame.from_records(all_activities)
-        df.to_csv("./data/strava/strava.csv")
+        df.to_csv("../data/strava/strava.csv")
+
+        df = pd.DataFrame.from_records(all_activities_by_laps)
+        df.to_csv("../data/strava/strava_laps.csv")
 
 
 class Collector:
@@ -177,7 +210,11 @@ class Collector:
         Collect data from the Garmin and Strava APIs.
         Save the collected data.
         """
+        print("starting to collect data...")
         garmin_activities = self.garmin_api.get_activities()
+        print("garmin activities fetched...")
         self.garmin_api.save_data(garmin_activities)
-
+        print("garmin data collected and saved...")
         self.strava_api.save_data()
+        print("strava data collected and saved...")
+        print("finished collecting data...")
