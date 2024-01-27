@@ -153,6 +153,27 @@ class StravaAPI:
         else:
             return None
 
+    def activity_traitement(self, activity):
+        """
+        Traitement des données de la lap (suppression de sous dictionnaires)
+        :param lap:
+        :return:lap
+        """
+        activity["activy"] = activity["activity"]["id"]
+        activity["athlete"] = activity["athlete"]["id"]
+
+        return activity
+
+    def lap_traitement(self, lap):
+        """
+        Traitement des données de la lap (suppression de sous dictionnaires)
+        :param lap:
+        :return:lap
+        """
+        lap["activy"] = lap["activity"]["id"]
+        lap["athlete"] = lap["athlete"]["id"]
+        return lap
+
     def save_data(self):
         """
         Save activities fetched from the Strava API in CSV format.
@@ -177,7 +198,11 @@ class StravaAPI:
             for el in activities:
                 try:
                     print(el["id"])
-                    all_activities_by_laps.append(self.get_activity_laps(el["id"]))
+                    all_activities_by_laps.append(
+                        self.lap_traitement(
+                            self.get_activity_laps(el["id"])
+                        )
+                    )
                 except Exception as e:
                     pass
             if len(activities) == 0:
