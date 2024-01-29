@@ -159,20 +159,23 @@ class StravaAPI:
         :param lap:
         :return:lap
         """
-        activity["activy"] = activity["activity"]["id"]
+        activity.pop('map', None)
+        activity.pop('start_latlng', None)
+        activity.pop('end_latlng', None)
         activity["athlete"] = activity["athlete"]["id"]
 
         return activity
 
-    def lap_traitement(self, lap):
+    def lap_traitement(self, laps):
         """
         Traitement des données de la lap (suppression de sous dictionnaires)
-        :param lap:
-        :return:lap
+        :param laps:
+        :return:laps
         """
-        lap["activy"] = lap["activity"]["id"]
-        lap["athlete"] = lap["athlete"]["id"]
-        return lap
+        for lap in laps:
+            lap["activity"] = lap["activity"]["id"]
+            lap["athlete"] = lap["athlete"]["id"]
+        return laps
 
     def save_data(self):
         """
@@ -181,40 +184,45 @@ class StravaAPI:
         """
         if not os.path.exists("../data/strava"):
             os.makedirs("../data/strava")
+        id_list = list(pd.read_csv("../data/strava/strava_id.csv")["id"].unique())
 
         page_num = 1
         all_activities = []
         all_activities_by_laps = []
         print("fetching strava activities...")
+        erreur = False
         while True:
             activities = self.get_activities(page_num)
-            print(all_activities)
-            all_activities.extend(activities)
-            """ if all_activities:
-                all_activities.extend(activities)
-            else:
-                all_activities = activities
-            """
-            for el in activities:
-                try:
-                    print(el["id"])
-                    all_activities_by_laps.append(
-                        self.lap_traitement(
-                            self.get_activity_laps(el["id"])
+            for i, el in enumerate(activities):
+                if el["id"] not in id_list:
+                    try:
+                        id_list.append(el["id"])
+                        print(i)
+                        all_activities.append(self.activity_traitement(el))
+                        all_activities_by_laps.extend(
+                            self.lap_traitement(
+                                self.get_activity_laps(el["id"])
+                            )
                         )
-                    )
-                except Exception as e:
-                    pass
+                    except Exception as e:
+                        print('error : plus de forfait api')
+                        erreur = True
+                        break
+            if erreur:
+                break
             if len(activities) == 0:
                 print("no more activities...")
                 break
             page_num += 1
 
-        df = pd.DataFrame.from_records(all_activities)
+        df = pd.DataFrame(all_activities)
         df.to_csv("../data/strava/strava.csv")
 
-        df = pd.DataFrame.from_records(all_activities_by_laps)
+        df = pd.DataFrame(all_activities_by_laps)
         df.to_csv("../data/strava/strava_laps.csv")
+
+        df = pd.DataFrame(id_list, columns=["id"])
+        df.to_csv("../data/strava/strava_id.csv")
 
 
 class Collector:
