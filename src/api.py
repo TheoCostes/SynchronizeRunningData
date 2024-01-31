@@ -26,6 +26,7 @@ class GarminAPI:
             email (str): The email to login to the Garmin API.
             password (str): The password to login to the Garmin API.
         """
+        print(email, password)
         self.api = self.init_api(email, password)
         self.start_date = datetime.date(2020, 1, 1)
         self.end_date = datetime.date.today()
