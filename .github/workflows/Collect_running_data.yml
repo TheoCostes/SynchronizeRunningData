@@ -1,0 +1,50 @@
+name: Collect Running Data
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'
+
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:    
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.9
+
+    - name: Install dependencies
+      run: |
+        echo "start install dependencies" >> $GITHUB_STEP_SUMMARY
+        python -m pip install --upgrade pip
+        echo "start requirements ..." >> $GITHUB_STEP_SUMMARY
+        pip install -r requirements.txt
+        echo "finiish requirements ..." >> $GITHUB_STEP_SUMMARY
+
+    - name: Execute Python script
+      env:
+        GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+        GARMIN_PWD: ${{ secrets.GARMIN_PWD }}
+        CLIENT_ID: ${{ secrets.CLIENT_ID }}
+        CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
+      run: | 
+        python ./Collect_data.py
+
+
