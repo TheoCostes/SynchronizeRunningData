@@ -241,6 +241,7 @@ class Collector:
         """
         Initialize the Garmin and Strava APIs.
         """
+        print(GARMIN_EMAIL, GARMIN_PWD)
         self.garmin_api = GarminAPI(GARMIN_EMAIL, GARMIN_PWD)
         self.strava_api = StravaAPI(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN)
 
