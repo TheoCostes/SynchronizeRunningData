@@ -59,15 +59,14 @@ class GarminAPI:
         Args:
             activities (list): The list of activities to save.
         """
-        if not os.path.exists("../data/garmin"):
-            os.makedirs("../data/garmin")
+        if not os.path.exists("./data/garmin"):
+            os.makedirs("./data/garmin")
 
         for i, activity in enumerate(activities):
-            print(i)
             activity_id = activity["activityId"]
             activity_date = activity["startTimeLocal"]
             output_file = (
-                f"../data/garmin/{str(activity_id)}_{str(activity_date)}.csv"
+                f"./data/garmin/{str(activity_id)}_{str(activity_date)}.csv"
             )
             file_exists = os.path.isfile(output_file)
             if not file_exists:
@@ -182,9 +181,9 @@ class StravaAPI:
         Save activities fetched from the Strava API in CSV format.
         If the directory for saving does not exist, create it.
         """
-        if not os.path.exists("../data/strava"):
-            os.makedirs("../data/strava")
-        id_list = list(pd.read_csv("../data/strava/strava_id.csv")["id"].unique())
+        if not os.path.exists("./data/strava"):
+            os.makedirs("./data/strava")
+        id_list = list(pd.read_csv("./data/strava/strava_id.csv")["id"].unique())
 
         page_num = 1
         all_activities = []
@@ -216,10 +215,10 @@ class StravaAPI:
             page_num += 1
 
         df = pd.DataFrame(all_activities)
-        df.to_csv("../data/strava/strava.csv")
+        df.to_csv("./data/strava/strava.csv",mode='a', header=False)
 
         df = pd.DataFrame(all_activities_by_laps)
-        df.to_csv("../data/strava/strava_laps.csv")
+        df.to_csv("./data/strava/strava_laps.csv",mode='a', header=False)
 
         df = pd.DataFrame(id_list, columns=["id"])
         df.to_csv("../data/strava/strava_id.csv")
