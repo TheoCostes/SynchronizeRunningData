@@ -229,7 +229,7 @@ class StravaAPI:
         df.to_csv("./data/strava/strava_laps.csv",mode='a', header=False)
 
         df = pd.DataFrame(id_list, columns=["id"])
-        df.to_csv("../data/strava/strava_id.csv")
+        df.to_csv("./data/strava/strava_id.csv")
 
 
 class Collector:
