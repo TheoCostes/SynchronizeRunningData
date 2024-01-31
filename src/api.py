@@ -4,7 +4,14 @@ import requests
 import pandas as pd
 
 from garminconnect import Garmin
-from config import GARMIN_EMAIL, GARMIN_PWD, CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
+# from config import GARMIN_EMAIL, GARMIN_PWD, CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
+
+GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL")
+GARMIN_PWD = os.environ.get("GARMIN_PWD")
+
+CLIENT_ID = os.environ.get("CLIENT_ID")
+CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+REFRESH_TOKEN = os.environ.get("REFRESH_TOKEN")
 
 
 class GarminAPI:
