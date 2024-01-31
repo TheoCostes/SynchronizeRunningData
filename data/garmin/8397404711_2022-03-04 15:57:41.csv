@@ -1,0 +1,4 @@
+Intervalle,Heure,Temps de déplacement,Distance,Gain d'altitude,Perte d'altitude,Allure moyenne,Allure moyenne en déplacement,Meilleure allure,Cadence de course moyenne,Cadence de course maximale,Longueur moyenne des foulées,Fréquence cardiaque moy.,Fréquence cardiaque maximale,Température moyenne,Calories
+1,00:03:14.009,00:03:14.009,0.27,--,63,0:12:07  ,0:12:07  ,0:09:45  ,109.828125,124.0,75.09136184271252,--,--,--,17
+2,00:00:01.050,00:00:01.000,0,--,--,0:07:23  ,0:07:01  ,0:12:04  ,110.5,113.0,122.55979279576164,--,--,--,0
+Summary,00:03:15.059,00:03:15.009,0.27,--,63,0:12:05  ,0:12:04  ,0:09:45  ,109.84375,124.0,75.3468837594823,--,--,--,17
