@@ -26,8 +26,8 @@ class GarminAPI:
             email (str): The email to login to the Garmin API.
             password (str): The password to login to the Garmin API.
         """
-        print(email, password)
-        self.api = self.init_api(email, password)
+        # print(email, password)
+        # self.api = self.init_api(email, password)
         self.start_date = datetime.date(2020, 1, 1)
         self.end_date = datetime.date.today()
 
@@ -243,7 +243,7 @@ class Collector:
         Initialize the Garmin and Strava APIs.
         """
         print(GARMIN_EMAIL, GARMIN_PWD)
-        self.garmin_api = GarminAPI(GARMIN_EMAIL, GARMIN_PWD)
+        #self.garmin_api = GarminAPI(GARMIN_EMAIL, GARMIN_PWD)
         self.strava_api = StravaAPI(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN)
 
     def collect_data(self):
@@ -252,9 +252,9 @@ class Collector:
         Save the collected data.
         """
         print("starting to collect data...")
-        garmin_activities = self.garmin_api.get_activities()
+        #garmin_activities = self.garmin_api.get_activities()
         print("garmin activities fetched...")
-        self.garmin_api.save_data(garmin_activities)
+        #self.garmin_api.save_data(garmin_activities)
         print("garmin data collected and saved...")
         self.strava_api.save_data()
         print("strava data collected and saved...")
