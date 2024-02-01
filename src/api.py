@@ -183,7 +183,7 @@ class StravaAPI:
             lap["athlete"] = lap["athlete"]["id"]
         return laps
 
-    def save_data(self):
+    def collect_data(self):
         """
         Save activities fetched from the Strava API in CSV format.
         If the directory for saving does not exist, create it.
@@ -221,39 +221,11 @@ class StravaAPI:
                 break
             page_num += 1
 
-        df = pd.DataFrame(all_activities)
-        df.to_csv("./data/strava/strava.csv",mode='a', header=False)
+        df_activities = pd.DataFrame(all_activities)
 
-        df = pd.DataFrame(all_activities_by_laps)
-        df.to_csv("./data/strava/strava_laps.csv",mode='a', header=False)
+        df_lap = pd.DataFrame(all_activities_by_laps)
 
         df = pd.DataFrame(id_list, columns=["id"])
         df.to_csv("../data/strava/strava_id.csv")
+        return df_lap, df_activities
 
-
-class Collector:
-    """
-    This class is responsible for managing the Garmin and Strava APIs.
-    It initializes the APIs and collects data from them.
-    """
-
-    def __init__(self):
-        """
-        Initialize the Garmin and Strava APIs.
-        """
-        self.garmin_api = GarminAPI(GARMIN_EMAIL, GARMIN_PWD)
-        self.strava_api = StravaAPI(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN)
-
-    def collect_data(self):
-        """
-        Collect data from the Garmin and Strava APIs.
-        Save the collected data.
-        """
-        print("starting to collect data...")
-        garmin_activities = self.garmin_api.get_activities()
-        print("garmin activities fetched...")
-        self.garmin_api.save_data(garmin_activities)
-        print("garmin data collected and saved...")
-        self.strava_api.save_data()
-        print("strava data collected and saved...")
-        print("finished collecting data...")
