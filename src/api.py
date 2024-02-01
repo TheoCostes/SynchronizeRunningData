@@ -26,7 +26,8 @@ class GarminAPI:
             email (str): The email to login to the Garmin API.
             password (str): The password to login to the Garmin API.
         """
-        self.api = self.init_api(email, password)
+        # print(email, password)
+        # self.api = self.init_api(email, password)
         self.start_date = datetime.date(2020, 1, 1)
         self.end_date = datetime.date.today()
 
@@ -228,4 +229,5 @@ class StravaAPI:
         df = pd.DataFrame(id_list, columns=["id"])
         df.to_csv("../data/strava/strava_id.csv")
         return df_lap, df_activities
+
 
