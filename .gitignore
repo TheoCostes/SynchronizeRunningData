@@ -2,6 +2,7 @@
 __pycache__/
 env/
 data/
+data/strava
 
 *.sqlite
 config.py
