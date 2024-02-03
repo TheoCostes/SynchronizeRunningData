@@ -6,6 +6,8 @@ import pandas as pd
 from garminconnect import Garmin
 # from config import GARMIN_EMAIL, GARMIN_PWD, CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
 
+os.chdir("../")
+
 GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL")
 GARMIN_PWD = os.environ.get("GARMIN_PWD")
 
@@ -184,14 +186,13 @@ class StravaAPI:
             lap["athlete"] = lap["athlete"]["id"]
         return laps
 
-    def collect_data(self):
+    def collect_data(self, id_list):
         """
         Save activities fetched from the Strava API in CSV format.
         If the directory for saving does not exist, create it.
         """
         if not os.path.exists("./data/strava"):
             os.makedirs("./data/strava")
-        id_list = list(pd.read_csv("./data/strava/strava_id.csv")["id"].unique())
 
         page_num = 1
         all_activities = []
@@ -201,6 +202,7 @@ class StravaAPI:
         while True:
             activities = self.get_activities(page_num)
             for i, el in enumerate(activities):
+                print(el)
                 if el["id"] not in id_list:
                     try:
                         id_list.append(el["id"])
@@ -226,8 +228,7 @@ class StravaAPI:
 
         df_lap = pd.DataFrame(all_activities_by_laps)
 
-        df = pd.DataFrame(id_list, columns=["id"])
-        df.to_csv("../data/strava/strava_id.csv")
-        return df_lap, df_activities
+        df_id = pd.DataFrame(id_list, columns=["id"])
+        return df_lap, df_activities, df_id
 
 
