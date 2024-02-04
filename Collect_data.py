@@ -122,6 +122,9 @@ class Collector:
         df_lap, df_activities, df_id = self.strava_api.collect_data(list(self.old_strava_id["id"].unique()))
 
         print(type(df_activities))
+        if df_activities.empty:
+            print("no new data from strava")
+            return
         transformerActivities = TransformerActivities(df_activities)
         df_activities = transformerActivities.transform_data()
 
