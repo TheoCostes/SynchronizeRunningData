@@ -83,6 +83,8 @@ class Collector:
             return existing_data
 
     def concat_and_save_strava_id(self, df_id):
+        if df_id.empty:
+            return
         updated_data = pd.concat([self.old_strava_id, df_id], ignore_index=True)
         updated_data = updated_data.drop_duplicates(subset=['id'])
         csv_buffer = StringIO()
@@ -90,6 +92,8 @@ class Collector:
         self.S3.put_object(Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_id)
 
     def concat_and_save_strava_activities(self, df_activities):
+        if df_activities.empty:
+            return
         updated_data = pd.concat([self.old_strava_activities, df_activities], ignore_index=True)
         updated_data = updated_data.drop_duplicates(subset=['id'])
         csv_buffer = StringIO()
@@ -97,6 +101,8 @@ class Collector:
         self.S3.put_object(Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_activities)
 
     def concat_and_save_strava_lap(self, df_lap):
+        if df_lap.empty:
+            return
         updated_data = pd.concat([self.old_strava_lap, df_lap], ignore_index=True)
         updated_data = updated_data.drop_duplicates(subset=['id'])
         csv_buffer = StringIO()
