@@ -84,20 +84,21 @@ class Collector:
 
     def concat_and_save_strava_id(self, df_id):
         updated_data = pd.concat([self.old_strava_id, df_id], ignore_index=True)
+        updated_data = updated_data.drop_duplicates(subset=['id'])
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
         self.S3.put_object(Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_id)
 
     def concat_and_save_strava_activities(self, df_activities):
-        print(self.old_strava_activities)
-        print(df_activities)
         updated_data = pd.concat([self.old_strava_activities, df_activities], ignore_index=True)
+        updated_data = updated_data.drop_duplicates(subset=['id'])
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
         self.S3.put_object(Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_activities)
 
     def concat_and_save_strava_lap(self, df_lap):
         updated_data = pd.concat([self.old_strava_lap, df_lap], ignore_index=True)
+        updated_data = updated_data.drop_duplicates(subset=['id'])
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
         self.S3.put_object(Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_lap)
@@ -147,7 +148,20 @@ class TransformerActivities:
 
     def clean_data(self):
         print(self.df_activities.columns)
-        self.df_activities = self.df_activities[self.columns]
+        print(self.df_activities)
+        try:
+            self.df_activities = self.df_activities[self.columns]
+        except KeyError as e:
+            print(e)
+            list_columns_missing = str(e) \
+                .split("]")[0] \
+                .split("[")[1] \
+                .replace("'", "")\
+                .split(", ")
+            for col in list_columns_missing:
+                self.df_activities[col] = None
+            self.df_activities = self.df_activities[self.columns]
+
         self.df_activities = self.df_activities.drop_duplicates(subset=['id'])
 
     def add_feature(self):
@@ -183,7 +197,18 @@ class TransformerLap:
                         'max_heartrate', 'pace_zone']
 
     def clean_data(self):
-        self.df_lap = self.df_lap[self.columns]
+        try:
+            self.df_lap = self.df_lap[self.columns]
+        except KeyError as e:
+            print(e)
+            list_columns_missing = str(e) \
+                .split("]")[0] \
+                .split("[")[1] \
+                .replace("'", "")\
+                .split(", ")
+            for col in list_columns_missing:
+                self.df_lap[col] = None
+            self.df_lap = self.df_lap[self.columns]
         self.df_lap = self.df_lap.drop_duplicates(subset=['id'])
 
     def transform_data(self):
