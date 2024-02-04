@@ -1,12 +1,22 @@
 import pandas as pd
 import boto3
 from io import StringIO
+import os
 
 from src.api import GarminAPI, StravaAPI
-from config import GARMIN_EMAIL, GARMIN_PWD, CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
-from config import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-
-
+try :
+    # if local :
+    from config import (GARMIN_EMAIL, GARMIN_PWD,
+                        CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN,
+                        AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+except:
+    GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL")
+    GARMIN_PWD = os.environ.get("GARMIN_PWD")
+    CLIENT_ID = os.environ.get("CLIENT_ID")
+    CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+    REFRESH_TOKEN = os.environ.get("REFRESH_TOKEN")
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 
 
 def tryconvert(value, index, default):
