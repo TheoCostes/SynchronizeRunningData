@@ -202,7 +202,6 @@ class StravaAPI:
         while True:
             activities = self.get_activities(page_num)
             for i, el in enumerate(activities):
-                print(el)
                 if el["id"] not in id_list:
                     try:
                         id_list.append(el["id"])
