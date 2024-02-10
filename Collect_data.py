@@ -4,11 +4,18 @@ from io import StringIO
 import os
 
 from src.api import GarminAPI, StravaAPI
-try :
+
+try:
     # if local :
-    from config import (GARMIN_EMAIL, GARMIN_PWD,
-                        CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN,
-                        AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+    from config import (
+        GARMIN_EMAIL,
+        GARMIN_PWD,
+        CLIENT_ID,
+        CLIENT_SECRET,
+        REFRESH_TOKEN,
+        AWS_ACCESS_KEY_ID,
+        AWS_SECRET_ACCESS_KEY,
+    )
 except:
     GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL")
     GARMIN_PWD = os.environ.get("GARMIN_PWD")
@@ -21,7 +28,7 @@ except:
 
 def tryconvert(value, index, default):
     try:
-        return value.split(' - ')[index]
+        return value.split(" - ")[index]
     except IndexError:
         return default
 
@@ -54,18 +61,19 @@ class Collector:
     def get_old_strava_id(self):
         try:
             response = self.S3.get_object(Bucket=self.s3_bucket, Key=self.s3_key_id)
-            existing_data = pd.read_csv(response['Body'])
+            existing_data = pd.read_csv(response["Body"])
             return existing_data
         except Exception as e:
             print("ERROR :", e)
             existing_data = pd.DataFrame()
             return existing_data
 
-
     def get_old_strava_activities(self):
         try:
-            response = self.S3.get_object(Bucket=self.s3_bucket, Key=self.s3_key_activities)
-            existing_data = pd.read_csv(response['Body'])
+            response = self.S3.get_object(
+                Bucket=self.s3_bucket, Key=self.s3_key_activities
+            )
+            existing_data = pd.read_csv(response["Body"])
             return existing_data
         except Exception as e:
             print("ERROR :", e)
@@ -75,7 +83,7 @@ class Collector:
     def get_old_strava_lap(self):
         try:
             response = self.S3.get_object(Bucket=self.s3_bucket, Key=self.s3_key_lap)
-            existing_data = pd.read_csv(response['Body'])
+            existing_data = pd.read_csv(response["Body"])
             return existing_data
         except Exception as e:
             print("ERROR :", e)
@@ -86,28 +94,67 @@ class Collector:
         if df_id.empty:
             return
         updated_data = pd.concat([self.old_strava_id, df_id], ignore_index=True)
-        updated_data = updated_data.drop_duplicates(subset=['id'])
+        updated_data = updated_data.drop_duplicates(subset=["id"])
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
-        self.S3.put_object(Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_id)
+        self.S3.put_object(
+            Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_id
+        )
 
     def concat_and_save_strava_activities(self, df_activities):
         if df_activities.empty:
             return
-        updated_data = pd.concat([self.old_strava_activities, df_activities], ignore_index=True)
-        updated_data = updated_data.drop_duplicates(subset=['id'])
+        updated_data = pd.concat(
+            [self.old_strava_activities, df_activities], ignore_index=True
+        )
+        updated_data = updated_data.drop_duplicates(subset=["id"])
+        updated_data = self.update_weekly_volume(updated_data)
+        updated_data.sort_values(
+            by=["prepa_id", "Numéro de semaine", "Numéro de seance"],
+            ascending=[False, False, True],
+            inplace=True,
+        )
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
-        self.S3.put_object(Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_activities)
+        self.S3.put_object(
+            Body=csv_buffer.getvalue(),
+            Bucket=self.s3_bucket,
+            Key=self.s3_key_activities,
+        )
 
     def concat_and_save_strava_lap(self, df_lap):
         if df_lap.empty:
             return
         updated_data = pd.concat([self.old_strava_lap, df_lap], ignore_index=True)
-        updated_data = updated_data.drop_duplicates(subset=['id'])
+        updated_data = updated_data.drop_duplicates(subset=["id"])
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
-        self.S3.put_object(Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_lap)
+        self.S3.put_object(
+            Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_lap
+        )
+
+    def update_weekly_volume(self, df_activities):
+        df_activities["Cumul_weekly_volume"] = df_activities.groupby(
+            ["prepa_id", "Numéro de semaine"]
+        )["distance"].cumsum()
+        weekly_volume = (
+            df_activities.groupby(["prepa_id", "Numéro de semaine"])["distance"]
+            .sum()
+            .reset_index()
+        )
+        # Fusionner les données calculées avec le DataFrame d'origine
+        df_activities = pd.merge(
+            df_activities,
+            weekly_volume,
+            on=["prepa_id", "Numéro de semaine"],
+            suffixes=("", "_weekly"),
+            how="left",
+        )
+        # Renommer la colonne ajoutée
+        df_activities.rename(
+            columns={"distance_weekly": "total_weekly_volume"}, inplace=True
+        )
+        return df_activities
 
     def collect_data(self):
         """
@@ -115,11 +162,13 @@ class Collector:
         Save the collected data.
         """
         print("starting to collect data...")
-        #garmin_activities = self.garmin_api.get_activities()
+        # garmin_activities = self.garmin_api.get_activities()
         print("garmin activities fetched...")
-        #self.garmin_api.save_data(garmin_activities)
+        # self.garmin_api.save_data(garmin_activities)
         print("garmin data collected and saved...")
-        df_lap, df_activities, df_id = self.strava_api.collect_data(list(self.old_strava_id["id"].unique()))
+        df_lap, df_activities, df_id = self.strava_api.collect_data(
+            list(self.old_strava_id["id"].unique())
+        )
 
         print(type(df_activities))
         if df_activities.empty:
@@ -139,90 +188,168 @@ class Collector:
         print("finished collecting data...")
 
 
-
-
 class TransformerActivities:
-
-    def __init__(self, df_activities):
+    def __init__(self, df_activities, old_activities=None):
+        self.old_activities = old_activities
         self.df_activities = df_activities
-        self.columns = ['id', 'athlete', 'name', 'type', 'start_date_local', 'distance', 'moving_time',
-                        'total_elevation_gain','sport_type', 'workout_type',
-                        'timezone', 'utc_offset', 'achievement_count', 'kudos_count', 'comment_count',
-                        'average_speed','max_speed', 'average_cadence', 'average_watts', 'max_watts',
-                        'weighted_average_watts', 'kilojoules', 'device_watts', 'has_heartrate',
-                        'average_heartrate', 'max_heartrate', 'elev_high', 'elev_low',
-                        'upload_id_str', 'external_id', 'pr_count',
-                        'total_photo_count', 'suffer_score'
-                        ]
+        self.columns = [
+            "id",
+            "athlete",
+            "name",
+            "type",
+            "start_date_local",
+            "distance",
+            "moving_time",
+            "total_elevation_gain",
+            "sport_type",
+            "workout_type",
+            "timezone",
+            "utc_offset",
+            "achievement_count",
+            "kudos_count",
+            "comment_count",
+            "average_speed",
+            "max_speed",
+            "average_cadence",
+            "average_watts",
+            "max_watts",
+            "weighted_average_watts",
+            "kilojoules",
+            "device_watts",
+            "has_heartrate",
+            "average_heartrate",
+            "max_heartrate",
+            "elev_high",
+            "elev_low",
+            "upload_id_str",
+            "external_id",
+            "pr_count",
+            "total_photo_count",
+            "suffer_score",
+        ]
 
     def clean_data(self):
-        print(self.df_activities.columns)
-        print(self.df_activities)
         try:
             self.df_activities = self.df_activities[self.columns]
         except KeyError as e:
             print(e)
-            list_columns_missing = str(e) \
-                .split("]")[0] \
-                .split("[")[1] \
-                .replace("'", "")\
-                .split(", ")
+            list_columns_missing = (
+                str(e).split("]")[0].split("[")[1].replace("'", "").split(", ")
+            )
             for col in list_columns_missing:
                 self.df_activities[col] = None
             self.df_activities = self.df_activities[self.columns]
 
-        self.df_activities = self.df_activities.drop_duplicates(subset=['id'])
+        self.df_activities = self.df_activities.drop_duplicates(subset=["id"])
+        self.df_activities["distance"] = self.df_activities["distance"] / 1000
 
     def add_feature(self):
-        self.df_activities['numero_semaine_prepa'] = self.df_activities['name'].apply(
-            lambda x: tryconvert(x, 0, "None"))
-        self.df_activities['numero_seance_semaine'] = self.df_activities['name'].apply(
-            lambda x: tryconvert(x, 1, "None"))
-        self.df_activities['type_seance'] = self.df_activities['name'].apply(lambda x: tryconvert(x, 3, "None"))
-        self.df_activities['prepa_name'] = self.df_activities['name'].apply(lambda x: tryconvert(x, 2, "None"))
+        self.df_activities["numero_semaine_prepa"] = self.df_activities["name"].apply(
+            lambda x: tryconvert(x, 0, "None")
+        )
+        self.df_activities["numero_seance_semaine"] = self.df_activities["name"].apply(
+            lambda x: tryconvert(x, 1, "None")
+        )
+        self.df_activities["type_seance"] = self.df_activities["name"].apply(
+            lambda x: tryconvert(x, 3, "None")
+        )
+        self.df_activities["prepa_name"] = self.df_activities["name"].apply(
+            lambda x: tryconvert(x, 2, "None")
+        )
 
-        #convert average_speed to km/h and round to 2 decimals and also to pace
-        self.df_activities['average_speed'] = self.df_activities['average_speed'] * 3.6
-        self.df_activities['average_speed'] = self.df_activities['average_speed'].round(2)
-        self.df_activities['average_pace'] = 60 / self.df_activities['average_speed']
+        # convert average_speed to km/h and round to 2 decimals and also to pace
+        self.df_activities["average_speed"] = self.df_activities["average_speed"] * 3.6
+        self.df_activities["average_speed"] = self.df_activities["average_speed"].round(
+            2
+        )
+        self.df_activities["average_pace"] = 60 / self.df_activities["average_speed"]
 
-        #convert moving_time to minutes and to hour
-        self.df_activities['moving_time_minute'] = self.df_activities['moving_time'] / 60
-        self.df_activities['moving_time_hour'] = self.df_activities['moving_time_minute'] / 60
+        # convert moving_time to minutes and to hour
+        self.df_activities["moving_time_minute"] = (
+            self.df_activities["moving_time"] / 60
+        )
+        self.df_activities["moving_time_hour"] = (
+            self.df_activities["moving_time_minute"] / 60
+        )
+
+    def compute_numero_semaine_prepa(self):
+        extracted_data = self.df_activities["numero_semaine_prepa"].str.extract(
+            r"S(\d+)/(\d+)"
+        )
+        self.df_activities["Numéro de semaine"] = extracted_data[0].astype(int)
+        self.df_activities["Durée de prépa"] = (
+            extracted_data[1].astype(int) if len(extracted_data.columns) > 1 else 0
+        )
+
+    def compute_numero_seance_semaine(self):
+        extracted_data = self.df_activities["numero_seance_semaine"].str.extract(
+            r"(\d+)/(\d+)"
+        )
+        self.df_activities["Numéro de seance"] = extracted_data[0].astype(int)
+        self.df_activities["Seance/semaine"] = (
+            extracted_data[1].astype(int) if len(extracted_data.columns) > 1 else 0
+        )
+
+    def compute_prepa_id(self):
+        self.df_activities["prepa_id"] = self.df_activities["prepa_name"].apply(
+            lambda x: self.old_activities[self.old_activities["name"] == x]["id"]
+            if x in self.old_activities["name"]
+            else self.old_activities["id"].max() + 1
+        )
 
     def transform_data(self):
         self.clean_data()
         self.add_feature()
+        self.compute_numero_semaine_prepa()
+        self.compute_numero_seance_semaine()
+        self.compute_prepa_id()
         return self.df_activities
 
+
 # create a class to manage the transformation lap data
+
 
 class TransformerLap:
     def __init__(self, df_lap):
         self.df_lap = df_lap
-        self.columns = ['id', 'activity', 'athlete', 'lap_index', 'split', 'start_index', 'end_index',
-                        'moving_time', 'start_date_local', 'distance', 'average_speed', 'max_speed',
-                        'total_elevation_gain', 'average_cadence','average_watts', 'average_heartrate',
-                        'max_heartrate', 'pace_zone']
+        self.columns = [
+            "id",
+            "activity",
+            "athlete",
+            "lap_index",
+            "split",
+            "start_index",
+            "end_index",
+            "moving_time",
+            "start_date_local",
+            "distance",
+            "average_speed",
+            "max_speed",
+            "total_elevation_gain",
+            "average_cadence",
+            "average_watts",
+            "average_heartrate",
+            "max_heartrate",
+            "pace_zone",
+        ]
 
     def clean_data(self):
         try:
             self.df_lap = self.df_lap[self.columns]
         except KeyError as e:
             print(e)
-            list_columns_missing = str(e) \
-                .split("]")[0] \
-                .split("[")[1] \
-                .replace("'", "")\
-                .split(", ")
+            list_columns_missing = (
+                str(e).split("]")[0].split("[")[1].replace("'", "").split(", ")
+            )
             for col in list_columns_missing:
                 self.df_lap[col] = None
             self.df_lap = self.df_lap[self.columns]
-        self.df_lap = self.df_lap.drop_duplicates(subset=['id'])
+        self.df_lap = self.df_lap.drop_duplicates(subset=["id"])
 
     def transform_data(self):
         self.clean_data()
         return self.df_lap
+
 
 if __name__ == "__main__":
     collector = Collector()
