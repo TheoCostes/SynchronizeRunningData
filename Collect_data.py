@@ -109,11 +109,7 @@ class Collector:
         )
         updated_data = updated_data.drop_duplicates(subset=["id"])
         updated_data = self.update_weekly_volume(updated_data)
-        updated_data.sort_values(
-            by=["prepa_id", "Numéro de semaine", "Numéro de seance"],
-            ascending=[False, False, True],
-            inplace=True,
-        )
+
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
         self.S3.put_object(
@@ -134,6 +130,11 @@ class Collector:
         )
 
     def update_weekly_volume(self, df_activities):
+        df_activities.sort_values(
+            by=["prepa_id", "Numéro de semaine", "Numéro de seance"],
+            ascending=[False, False, True],
+            inplace=True,
+        )
         df_activities["Cumul_weekly_volume"] = df_activities.groupby(
             ["prepa_id", "Numéro de semaine"]
         )["distance"].cumsum()
@@ -143,13 +144,15 @@ class Collector:
             .reset_index()
         )
         # Fusionner les données calculées avec le DataFrame d'origine
-        df_activities = pd.merge(
+        df_activities= pd.merge(
             df_activities,
             weekly_volume,
             on=["prepa_id", "Numéro de semaine"],
             suffixes=("", "_weekly"),
             how="left",
         )
+        del df_activities["total_weekly_volume"]
+        del df_activities["total_weekly_volume.1"]
         # Renommer la colonne ajoutée
         df_activities.rename(
             columns={"distance_weekly": "total_weekly_volume"}, inplace=True
@@ -292,9 +295,9 @@ class TransformerActivities:
 
     def compute_prepa_id(self):
         self.df_activities["prepa_id"] = self.df_activities["prepa_name"].apply(
-            lambda x: self.old_activities[self.old_activities["name"] == x]["id"]
-            if x in self.old_activities["name"]
-            else self.old_activities["id"].max() + 1
+            lambda x: self.old_activities[self.old_activities["prepa_name"] == x]["prepa_id"]
+            if x in self.old_activities["prepa_name"].unique()
+            else self.old_activities["prepa_id"].max() + 1
         )
 
     def transform_data(self):
