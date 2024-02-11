@@ -174,7 +174,7 @@ class Collector:
         if df_activities.empty:
             print("no new data from strava")
             return
-        transformerActivities = TransformerActivities(df_activities)
+        transformerActivities = TransformerActivities(df_activities, self.old_strava_activities)
         df_activities = transformerActivities.transform_data()
 
         transformerLap = TransformerLap(df_lap)
