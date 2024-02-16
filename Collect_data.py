@@ -152,7 +152,6 @@ class Collector:
             how="left",
         )
         del df_activities["total_weekly_volume"]
-        del df_activities["total_weekly_volume.1"]
         # Renommer la colonne ajoutée
         df_activities.rename(
             columns={"distance_weekly": "total_weekly_volume"}, inplace=True
@@ -293,11 +292,19 @@ class TransformerActivities:
             extracted_data[1].astype(int) if len(extracted_data.columns) > 1 else 0
         )
 
+    def get_prepa_id(self, x):
+        # Filter the old_activities to find matching prepa_name
+        matching_rows = self.old_activities[self.old_activities["prepa_name"] == x]
+        if not matching_rows.empty:
+            # If there's at least one match, return the first prepa_id
+            return matching_rows["prepa_id"].iloc[0]
+        else:
+            # If there's no match, return the max prepa_id + 1
+            return self.old_activities["prepa_id"].max() + 1
+
     def compute_prepa_id(self):
         self.df_activities["prepa_id"] = self.df_activities["prepa_name"].apply(
-            lambda x: self.old_activities[self.old_activities["prepa_name"] == x]["prepa_id"]
-            if x in self.old_activities["prepa_name"].unique()
-            else self.old_activities["prepa_id"].max() + 1
+            self.get_prepa_id
         )
 
     def transform_data(self):
