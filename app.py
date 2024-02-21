@@ -65,10 +65,23 @@ st.markdown(f"Distance Totale: {round(filtered_data['distance'].sum(),2)} km")
 # Graphiques
 st.header('Graphiques')
 
+
+# create da agregate df at the weekly level from the numero semaine and the year
+agg_data = filtered_data.groupby(['prepa_name', 'Numéro de semaine']).agg(
+    date=('date', 'min'),
+    total_weekly_volume = ('distance', 'sum'),
+    total_weekly_elevation = ('total_elevation_gain', 'sum'),
+    total_weekly_time = ('moving_time', 'sum'),
+    average_weekly_speed = ('average_speed', 'mean'),
+    total_weekly_activities = ('id', 'count'),
+    intensity = ('suffer_score', 'sum'),
+).reset_index()
+
 # Volume Hebdomadaire d'Entraînement
 st.subheader('Volume Hebdomadaire d\'Entraînement')
+# creer un graphique à barres
 fig, ax = plt.subplots()
-ax.plot(filtered_data['date'], filtered_data['total_weekly_volume'])
+ax.plot(agg_data['date'], agg_data['total_weekly_volume'])
 st.pyplot(fig)
 
 # Distribution des activités par type de séance
