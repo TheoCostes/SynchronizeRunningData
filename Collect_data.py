@@ -176,11 +176,12 @@ class Collector:
         if df_activities.empty:
             print("no new data from strava")
             return
-        transformerActivities = TransformerActivities(df_activities, self.old_strava_activities)
-        df_activities = transformerActivities.transform_data()
 
         transformerLap = TransformerLap(df_lap)
         df_lap = transformerLap.transform_data()
+
+        transformerActivities = TransformerActivities(df_activities, self.old_strava_activities)
+        df_activities = transformerActivities.transform_data(df_lap)
 
         self.concat_and_save_strava_activities(df_activities)
         self.concat_and_save_strava_lap(df_lap)
@@ -307,12 +308,32 @@ class TransformerActivities:
             self.get_prepa_id
         )
 
-    def transform_data(self):
+    def merge_lap_zone(self, df_lap):
+        agg_lap = df_lap.groupby('activity').agg(
+            Z1 = ('Z1', 'sum'),
+            Z2 = ('Z2', 'sum'),
+            Z3 = ('Z3', 'sum'),
+            Z4 = ('Z4', 'sum'),
+            Z5 = ('Z5', 'sum'),
+            distance = ('distance', 'sum')
+        ).reset_index()
+        agg_lap['%Z1'] = agg_lap['Z1'] / agg_lap['distance'] * 100
+        agg_lap['%Z2'] = agg_lap['Z2'] / agg_lap['distance'] * 100
+        agg_lap['%Z3'] = agg_lap['Z3'] / agg_lap['distance'] * 100
+        agg_lap['%Z4'] = agg_lap['Z4'] / agg_lap['distance'] * 100
+        agg_lap['%Z5'] = agg_lap['Z5'] / agg_lap['distance'] * 100
+
+        to_merge = ['activity', 'Z1', '%Z1', 'Z2', '%Z2', 'Z3', '%Z3', 'Z4', '%Z4', 'Z5', '%Z5']
+        self.df_activities = pd.merge(self.df_activities, agg_lap[to_merge], left_on='id', right_on='activity', how='left')
+        self.df_activities = self.df_activities.drop(columns='activity')
+
+    def transform_data(self, df_lap):
         self.clean_data()
         self.add_feature()
         self.compute_numero_semaine_prepa()
         self.compute_numero_seance_semaine()
         self.compute_prepa_id()
+        self.merge_lap_zone(df_lap)
         return self.df_activities
 
 
@@ -356,8 +377,16 @@ class TransformerLap:
             self.df_lap = self.df_lap[self.columns]
         self.df_lap = self.df_lap.drop_duplicates(subset=["id"])
 
+    def compute_zone(self):
+        self.df_lap['Z1'] = self.df_lap.apply(lambda row: row['distance'] if row['pace_zone'] == 1.0 else 0, axis=1)
+        self.df_lap['Z2'] = self.df_lap.apply(lambda row: row['distance'] if row['pace_zone'] == 2.0 else 0, axis=1)
+        self.df_lap['Z3'] = self.df_lap.apply(lambda row: row['distance'] if row['pace_zone'] == 3.0 else 0, axis=1)
+        self.df_lap['Z4'] = self.df_lap.apply(lambda row: row['distance'] if row['pace_zone'] == 4.0 else 0, axis=1)
+        self.df_lap['Z5'] = self.df_lap.apply(lambda row: row['distance'] if row['pace_zone'] == 5.0 else 0, axis=1)
+
     def transform_data(self):
         self.clean_data()
+        self.compute_zone()
         return self.df_lap
 
 
