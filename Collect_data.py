@@ -172,7 +172,6 @@ class Collector:
             list(self.old_strava_id["id"].unique())
         )
 
-        print(type(df_activities))
         if df_activities.empty:
             print("no new data from strava")
             return
