@@ -6,7 +6,6 @@ import pandas as pd
 from garminconnect import Garmin
 # from config import GARMIN_EMAIL, GARMIN_PWD, CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN
 
-os.chdir("../")
 
 GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL")
 GARMIN_PWD = os.environ.get("GARMIN_PWD")
