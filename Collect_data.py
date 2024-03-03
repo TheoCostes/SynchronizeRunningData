@@ -39,10 +39,11 @@ class Collector:
     It initializes the APIs and collects data from them.
     """
 
-    def __init__(self):
+    def __init__(self, local = True):
         """
         Initialize the Garmin and Strava APIs.
         """
+        self.local = local
         self.garmin_api = GarminAPI(GARMIN_EMAIL, GARMIN_PWD)
         self.strava_api = StravaAPI(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN)
         self.s3_bucket = "datarunning"
@@ -59,36 +60,57 @@ class Collector:
         self.old_strava_lap = self.get_old_strava_lap()
 
     def get_old_strava_id(self):
-        try:
-            response = self.S3.get_object(Bucket=self.s3_bucket, Key=self.s3_key_id)
-            existing_data = pd.read_csv(response["Body"])
-            return existing_data
-        except Exception as e:
-            print("ERROR :", e)
-            existing_data = pd.DataFrame()
-            return existing_data
+        if not self.local :
+            try:
+                response = self.S3.get_object(Bucket=self.s3_bucket, Key=self.s3_key_id)
+                existing_data = pd.read_csv(response["Body"])
+                return existing_data
+            except Exception as e:
+                print("ERROR :", e)
+                existing_data = pd.DataFrame()
+                return existing_data
+        else:
+            try:
+                data = pd.read_csv("data/strava_id.csv")
+                return data
+            except:
+                return pd.DataFrame()
 
     def get_old_strava_activities(self):
-        try:
-            response = self.S3.get_object(
-                Bucket=self.s3_bucket, Key=self.s3_key_activities
-            )
-            existing_data = pd.read_csv(response["Body"])
-            return existing_data
-        except Exception as e:
-            print("ERROR :", e)
-            existing_data = pd.DataFrame()
-            return existing_data
+        if not self.local :
+            try:
+                response = self.S3.get_object(
+                    Bucket=self.s3_bucket, Key=self.s3_key_activities
+                )
+                existing_data = pd.read_csv(response["Body"])
+                return existing_data
+            except Exception as e:
+                print("ERROR :", e)
+                existing_data = pd.DataFrame()
+                return existing_data
+        else:
+            try:
+                data = pd.read_csv("data/strava.csv")
+                return data
+            except:
+                return pd.DataFrame()
 
     def get_old_strava_lap(self):
-        try:
-            response = self.S3.get_object(Bucket=self.s3_bucket, Key=self.s3_key_lap)
-            existing_data = pd.read_csv(response["Body"])
-            return existing_data
-        except Exception as e:
-            print("ERROR :", e)
-            existing_data = pd.DataFrame()
-            return existing_data
+        if not self.local :
+            try:
+                response = self.S3.get_object(Bucket=self.s3_bucket, Key=self.s3_key_lap)
+                existing_data = pd.read_csv(response["Body"])
+                return existing_data
+            except Exception as e:
+                print("ERROR :", e)
+                existing_data = pd.DataFrame()
+                return existing_data
+        else:
+            try:
+                data = pd.read_csv("data/strava_laps.csv")
+                return data
+            except:
+                return pd.DataFrame()
 
     def concat_and_save_strava_id(self, df_id):
         if df_id.empty:
@@ -97,9 +119,12 @@ class Collector:
         updated_data = updated_data.drop_duplicates(subset=["id"])
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
-        self.S3.put_object(
-            Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_id
-        )
+        if not self.local :
+            self.S3.put_object(
+                Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_id
+            )
+        else:
+            updated_data.to_csv("./data/strava_id.csv", index=False)
 
     def concat_and_save_strava_activities(self, df_activities):
         if df_activities.empty:
@@ -108,15 +133,18 @@ class Collector:
             [self.old_strava_activities, df_activities], ignore_index=True
         )
         updated_data = updated_data.drop_duplicates(subset=["id"])
-        updated_data = self.update_weekly_volume(updated_data)
+        #updated_data = self.update_weekly_volume(updated_data)
 
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
-        self.S3.put_object(
-            Body=csv_buffer.getvalue(),
-            Bucket=self.s3_bucket,
-            Key=self.s3_key_activities,
-        )
+        if not self.local :
+            self.S3.put_object(
+                Body=csv_buffer.getvalue(),
+                Bucket=self.s3_bucket,
+                Key=self.s3_key_activities,
+            )
+        else:
+            updated_data.to_csv("./data/strava.csv", index=False)
 
     def concat_and_save_strava_lap(self, df_lap):
         if df_lap.empty:
@@ -125,9 +153,12 @@ class Collector:
         updated_data = updated_data.drop_duplicates(subset=["id"])
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
-        self.S3.put_object(
-            Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_lap
-        )
+        if not self.local :
+            self.S3.put_object(
+                Body=csv_buffer.getvalue(), Bucket=self.s3_bucket, Key=self.s3_key_lap
+            )
+        else:
+            updated_data.to_csv("./data/strava_laps.csv", index=False)
 
     def update_weekly_volume(self, df_activities):
         df_activities.sort_values(
@@ -168,19 +199,24 @@ class Collector:
         print("garmin activities fetched...")
         # self.garmin_api.save_data(garmin_activities)
         print("garmin data collected and saved...")
-        df_lap, df_activities, df_id = self.strava_api.collect_data(
-            list(self.old_strava_id["id"].unique())
-        )
+        try :
+            df_lap, df_activities, df_id = self.strava_api.collect_data(
+                list(self.old_strava_id["id"].unique())
+            )
+        except Exception as e:
+            df_lap, df_activities, df_id = self.strava_api.collect_data(
+                []
+            )
 
         if df_activities.empty:
             print("no new data from strava")
             return
 
-        transformerLap = TransformerLap(df_lap)
-        df_lap = transformerLap.transform_data()
+     #   transformerLap = TransformerLap(df_lap)
+      #  df_lap = transformerLap.transform_data()
 
-        transformerActivities = TransformerActivities(df_activities, self.old_strava_activities)
-        df_activities = transformerActivities.transform_data(df_lap)
+       # transformerActivities = TransformerActivities(df_activities, self.old_strava_activities)
+        #df_activities = transformerActivities.transform_data(df_lap)
 
         self.concat_and_save_strava_activities(df_activities)
         self.concat_and_save_strava_lap(df_lap)
@@ -278,6 +314,8 @@ class TransformerActivities:
         extracted_data = self.df_activities["numero_semaine_prepa"].str.extract(
             r"S(\d+)/(\d+)"
         )
+        extracted_data = extracted_data.fillna(0)
+
         self.df_activities["Numéro de semaine"] = extracted_data[0].astype(int)
         self.df_activities["Durée de prépa"] = (
             extracted_data[1].astype(int) if len(extracted_data.columns) > 1 else 0
@@ -287,6 +325,7 @@ class TransformerActivities:
         extracted_data = self.df_activities["numero_seance_semaine"].str.extract(
             r"(\d+)/(\d+)"
         )
+        extracted_data = extracted_data.fillna(0)
         self.df_activities["Numéro de seance"] = extracted_data[0].astype(int)
         self.df_activities["Seance/semaine"] = (
             extracted_data[1].astype(int) if len(extracted_data.columns) > 1 else 0
@@ -294,13 +333,19 @@ class TransformerActivities:
 
     def get_prepa_id(self, x):
         # Filter the old_activities to find matching prepa_name
-        matching_rows = self.old_activities[self.old_activities["prepa_name"] == x]
+        try:
+            matching_rows = self.old_activities[self.old_activities["prepa_name"] == x]
+        except:
+            matching_rows = pd.DataFrame()
         if not matching_rows.empty:
             # If there's at least one match, return the first prepa_id
             return matching_rows["prepa_id"].iloc[0]
         else:
-            # If there's no match, return the max prepa_id + 1
-            return self.old_activities["prepa_id"].max() + 1
+            if self.old_activities is None or self.old_activities.empty:
+                return 1
+            else :
+                # If there's no match, return the max prepa_id + 1
+                return self.old_activities["prepa_id"].max() + 1
 
     def compute_prepa_id(self):
         self.df_activities["prepa_id"] = self.df_activities["prepa_name"].apply(
