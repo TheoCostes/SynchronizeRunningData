@@ -193,7 +193,7 @@ class StravaAPI:
         """
         if not os.path.exists("./data/strava"):
             os.makedirs("./data/strava")
-
+        print("LIIIIST", id_list)
         page_num = 1
         all_activities = []
         all_activities_by_laps = []
