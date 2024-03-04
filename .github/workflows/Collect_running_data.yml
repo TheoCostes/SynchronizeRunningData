@@ -1,8 +1,8 @@
 name: Collect Running Data
 
 on:
- # schedule:
-#    - cron: '0 12 */1 * *'
+  schedule:
+    - cron: '0 12 */1 * *'
 
   workflow_dispatch:
     inputs:
