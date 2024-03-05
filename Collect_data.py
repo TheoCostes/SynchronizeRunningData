@@ -133,7 +133,7 @@ class Collector:
             [self.old_strava_activities, df_activities], ignore_index=True
         )
         updated_data = updated_data.drop_duplicates(subset=["id"])
-        #updated_data = self.update_weekly_volume(updated_data)
+        updated_data = self.update_weekly_volume(updated_data)
 
         csv_buffer = StringIO()
         updated_data.to_csv(csv_buffer, index=False)
@@ -212,11 +212,11 @@ class Collector:
             print("no new data from strava")
             return
 
-     #   transformerLap = TransformerLap(df_lap)
-      #  df_lap = transformerLap.transform_data()
+        transformerLap = TransformerLap(df_lap)
+        df_lap = transformerLap.transform_data()
 
-       # transformerActivities = TransformerActivities(df_activities, self.old_strava_activities)
-        #df_activities = transformerActivities.transform_data(df_lap)
+        transformerActivities = TransformerActivities(df_activities, self.old_strava_activities)
+        df_activities = transformerActivities.transform_data(df_lap)
 
         self.concat_and_save_strava_activities(df_activities)
         self.concat_and_save_strava_lap(df_lap)
