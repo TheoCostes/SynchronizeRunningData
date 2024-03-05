@@ -182,7 +182,6 @@ class Collector:
             suffixes=("", "_weekly"),
             how="left",
         )
-        del df_activities["total_weekly_volume"]
         # Renommer la colonne ajoutée
         df_activities.rename(
             columns={"distance_weekly": "total_weekly_volume"}, inplace=True
